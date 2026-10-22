@@ -1,0 +1,284 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidSkin(skin) {
+      return skin is string && skin.size() <= 32 && (
+        skin == 'classic_orange' ||
+        skin == 'arctic_rescue' ||
+        skin == 'midnight_frost' ||
+        skin == 'golden_mammoth' ||
+        skin == 'pine_ranger'
+      );
+    }
+
+    function isValidMode(mode) {
+      return mode is string && mode.size() <= 20 && (
+        mode == 'standard' ||
+        mode == 'daily' ||
+        mode == 'blizzard' ||
+        mode == 'multiplayer'
+      );
+    }
+
+    function isValidWeather(weather) {
+      return weather is string && weather.size() <= 20 && (
+        weather == 'clear' ||
+        weather == 'flurry' ||
+        weather == 'blizzard' ||
+        weather == 'ice_storm'
+      );
+    }
+
+    function isValidMatchStatus(status) {
+      return status is string && status.size() <= 20 && (
+        status == 'waiting' ||
+        status == 'active' ||
+        status == 'finished'
+      );
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'coins', 'totalSnowCleared', 'bestCombo',
+        'highScore', 'equippedSkin', 'unlockedSkins', 'plowWidthLevel',
+        'enginePowerLevel', 'tireGripLevel', 'saltSpreaderLevel',
+        'thermalCabLevel', 'dailyStreak', 'lastDailyDate', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'displayName', 'coins', 'totalSnowCleared', 'bestCombo',
+        'highScore', 'equippedSkin', 'unlockedSkins', 'plowWidthLevel',
+        'enginePowerLevel', 'tireGripLevel', 'saltSpreaderLevel',
+        'thermalCabLevel', 'dailyStreak', 'lastDailyDate', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.uid) &&
+      data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 50 &&
+      data.coins is int && data.coins >= 0 && data.coins <= 100000000 &&
+      data.totalSnowCleared is int && data.totalSnowCleared >= 0 && data.totalSnowCleared <= 100000000 &&
+      data.bestCombo is int && data.bestCombo >= 1 && data.bestCombo <= 1000 &&
+      data.highScore is int && data.highScore >= 0 && data.highScore <= 100000000 &&
+      isValidSkin(data.equippedSkin) &&
+      data.unlockedSkins is list && data.unlockedSkins.size() >= 1 && data.unlockedSkins.size() <= 10 &&
+      data.unlockedSkins[0] is string && data.unlockedSkins[0].size() <= 32 &&
+      data.plowWidthLevel is int && data.plowWidthLevel >= 1 && data.plowWidthLevel <= 5 &&
+      data.enginePowerLevel is int && data.enginePowerLevel >= 1 && data.enginePowerLevel <= 5 &&
+      data.tireGripLevel is int && data.tireGripLevel >= 1 && data.tireGripLevel <= 5 &&
+      data.saltSpreaderLevel is int && data.saltSpreaderLevel >= 1 && data.saltSpreaderLevel <= 5 &&
+      data.thermalCabLevel is int && data.thermalCabLevel >= 1 && data.thermalCabLevel <= 5 &&
+      data.dailyStreak is int && data.dailyStreak >= 0 && data.dailyStreak <= 10000 &&
+      data.lastDailyDate is string && data.lastDailyDate.size() <= 20 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll([
+        'entryId', 'uid', 'displayName', 'score', 'maxCombo',
+        'snowCleared', 'mode', 'dailySeed', 'skinId', 'visibility',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'entryId', 'uid', 'displayName', 'score', 'maxCombo',
+        'snowCleared', 'mode', 'dailySeed', 'skinId', 'visibility',
+        'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.entryId) &&
+      isValidId(data.uid) &&
+      data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 50 &&
+      data.score is int && data.score >= 0 && data.score <= 100000000 &&
+      data.maxCombo is int && data.maxCombo >= 1 && data.maxCombo <= 1000 &&
+      data.snowCleared is int && data.snowCleared >= 0 && data.snowCleared <= 100000000 &&
+      isValidMode(data.mode) &&
+      data.dailySeed is string && data.dailySeed.size() <= 20 &&
+      isValidSkin(data.skinId) &&
+      data.visibility is string && data.visibility.size() == 6 && data.visibility == 'public' &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidMultiplayerMatch(data) {
+      return data.keys().hasAll([
+        'matchId', 'hostUid', 'hostName', 'hostSkin', 'hostScore', 'hostProgress',
+        'hostX', 'hostZ', 'hostAngle', 'guestUid', 'guestName', 'guestSkin',
+        'guestScore', 'guestProgress', 'guestX', 'guestZ', 'guestAngle',
+        'mapSeed', 'weather', 'status', 'winnerUid', 'visibility',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'matchId', 'hostUid', 'hostName', 'hostSkin', 'hostScore', 'hostProgress',
+        'hostX', 'hostZ', 'hostAngle', 'guestUid', 'guestName', 'guestSkin',
+        'guestScore', 'guestProgress', 'guestX', 'guestZ', 'guestAngle',
+        'mapSeed', 'weather', 'status', 'winnerUid', 'visibility',
+        'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.matchId) &&
+      isValidId(data.hostUid) &&
+      data.hostName is string && data.hostName.size() >= 1 && data.hostName.size() <= 50 &&
+      isValidSkin(data.hostSkin) &&
+      data.hostScore is int && data.hostScore >= 0 && data.hostScore <= 100000000 &&
+      data.hostProgress is int && data.hostProgress >= 0 && data.hostProgress <= 100 &&
+      data.hostX is number && data.hostX >= -500 && data.hostX <= 500 &&
+      data.hostZ is number && data.hostZ >= -500 && data.hostZ <= 500 &&
+      data.hostAngle is number && data.hostAngle >= -100 && data.hostAngle <= 100 &&
+      data.guestUid is string && data.guestUid.size() <= 128 &&
+      (data.guestUid == '' || isValidId(data.guestUid)) &&
+      data.guestName is string && data.guestName.size() <= 50 &&
+      isValidSkin(data.guestSkin) &&
+      data.guestScore is int && data.guestScore >= 0 && data.guestScore <= 100000000 &&
+      data.guestProgress is int && data.guestProgress >= 0 && data.guestProgress <= 100 &&
+      data.guestX is number && data.guestX >= -500 && data.guestX <= 500 &&
+      data.guestZ is number && data.guestZ >= -500 && data.guestZ <= 500 &&
+      data.guestAngle is number && data.guestAngle >= -100 && data.guestAngle <= 100 &&
+      data.mapSeed is string && data.mapSeed.size() >= 1 && data.mapSeed.size() <= 32 &&
+      isValidWeather(data.weather) &&
+      isValidMatchStatus(data.status) &&
+      data.winnerUid is string && data.winnerUid.size() <= 128 &&
+      data.visibility is string && data.visibility.size() == 6 && data.visibility == 'public' &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    // 4. Collection Rules: /users/{userId}
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && existing().uid == request.auth.uid;
+      allow list: if isSignedIn() && existing().uid == request.auth.uid;
+
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        isValidUserProfile(incoming()) &&
+        incoming().createdAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'coins', 'totalSnowCleared', 'bestCombo',
+          'highScore', 'equippedSkin', 'unlockedSkins', 'plowWidthLevel',
+          'enginePowerLevel', 'tireGripLevel', 'saltSpreaderLevel',
+          'thermalCabLevel', 'dailyStreak', 'lastDailyDate', 'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // 5. Collection Rules: /leaderboard/{entryId}
+    match /leaderboard/{entryId} {
+      allow get: if isValidId(entryId) && existing().visibility == 'public';
+      allow list: if existing().visibility == 'public';
+
+      allow create: if isVerifiedUser() &&
+        isValidId(entryId) &&
+        isValidLeaderboardEntry(incoming()) &&
+        incoming().entryId == entryId &&
+        incoming().createdAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(entryId) &&
+        isValidLeaderboardEntry(incoming()) &&
+        existing().uid == request.auth.uid &&
+        incoming().uid == existing().uid &&
+        incoming().entryId == existing().entryId &&
+        incoming().mode == existing().mode &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'score', 'maxCombo', 'snowCleared',
+          'dailySeed', 'skinId', 'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // 6. Collection Rules: /matches/{matchId}
+    match /matches/{matchId} {
+      allow get: if isValidId(matchId) && existing().visibility == 'public';
+      allow list: if existing().visibility == 'public';
+
+      allow create: if isVerifiedUser() &&
+        isValidId(matchId) &&
+        isValidMultiplayerMatch(incoming()) &&
+        incoming().matchId == matchId &&
+        incoming().hostUid == request.auth.uid &&
+        incoming().guestUid == '' &&
+        incoming().status == 'waiting' &&
+        incoming().winnerUid == '' &&
+        incoming().createdAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(matchId) &&
+        isValidMultiplayerMatch(incoming()) &&
+        existing().status != 'finished' &&
+        incoming().matchId == existing().matchId &&
+        incoming().hostUid == existing().hostUid &&
+        incoming().mapSeed == existing().mapSeed &&
+        incoming().weather == existing().weather &&
+        incoming().createdAt == existing().createdAt && (
+          // Action 1: Guest Joins Waiting Room
+          (
+            existing().status == 'waiting' &&
+            existing().guestUid == '' &&
+            request.auth.uid != existing().hostUid &&
+            incoming().guestUid == request.auth.uid &&
+            incoming().status == 'active' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'guestUid', 'guestName', 'guestSkin', 'guestX', 'guestZ', 'guestAngle', 'status', 'updatedAt'
+            ])
+          ) ||
+          // Action 2: Host Telemetry & Match Completion Update
+          (
+            request.auth.uid == existing().hostUid &&
+            incoming().guestUid == existing().guestUid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'hostScore', 'hostProgress', 'hostX', 'hostZ', 'hostAngle', 'status', 'winnerUid', 'updatedAt'
+            ])
+          ) ||
+          // Action 3: Guest Telemetry & Match Completion Update
+          (
+            existing().status == 'active' &&
+            request.auth.uid == existing().guestUid &&
+            incoming().guestUid == existing().guestUid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'guestScore', 'guestProgress', 'guestX', 'guestZ', 'guestAngle', 'status', 'winnerUid', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if false;
+    }
+  }
+}

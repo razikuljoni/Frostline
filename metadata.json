@@ -1,0 +1,6 @@
+{
+  "name": "Frostline Plow Co.",
+  "description": "A cozy 3D isometric snow-plowing simulation game with realistic snow depth physics, dynamic blizzards, truck upgrades, synth audio, daily challenges, cloud saves, and cross-platform multiplayer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,354 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Cloud-synced player progression, truck upgrades, unlocked skins, and stats.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the player",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player public display name",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "coins": {
+          "type": "integer",
+          "description": "In-game currency earned from clearing snow"
+        },
+        "totalSnowCleared": {
+          "type": "integer",
+          "description": "Total cubic meters of snow cleared across all sessions"
+        },
+        "bestCombo": {
+          "type": "integer",
+          "description": "Highest combo multiplier reached"
+        },
+        "highScore": {
+          "type": "integer",
+          "description": "Highest single-run score"
+        },
+        "equippedSkin": {
+          "type": "string",
+          "description": "Currently equipped plow truck skin ID",
+          "enum": ["classic_orange", "arctic_rescue", "midnight_frost", "golden_mammoth", "pine_ranger"]
+        },
+        "unlockedSkins": {
+          "type": "array",
+          "description": "List of unlocked skin IDs (max 10)"
+        },
+        "plowWidthLevel": {
+          "type": "integer",
+          "description": "Plow blade width upgrade level (1-5)"
+        },
+        "enginePowerLevel": {
+          "type": "integer",
+          "description": "Engine torque upgrade level for deep snow (1-5)"
+        },
+        "tireGripLevel": {
+          "type": "integer",
+          "description": "Chained tire traction upgrade level (1-5)"
+        },
+        "saltSpreaderLevel": {
+          "type": "integer",
+          "description": "Rear salt spreader melt width & bonus multiplier level (1-5)"
+        },
+        "thermalCabLevel": {
+          "type": "integer",
+          "description": "Blizzard visibility and cabin heater upgrade level (1-5)"
+        },
+        "dailyStreak": {
+          "type": "integer",
+          "description": "Consecutive daily challenges completed"
+        },
+        "lastDailyDate": {
+          "type": "string",
+          "description": "YYYY-MM-DD of last completed daily challenge",
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of profile creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last profile sync"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "coins",
+        "totalSnowCleared",
+        "bestCombo",
+        "highScore",
+        "equippedSkin",
+        "unlockedSkins",
+        "plowWidthLevel",
+        "enginePowerLevel",
+        "tireGripLevel",
+        "saltSpreaderLevel",
+        "thermalCabLevel",
+        "dailyStreak",
+        "lastDailyDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "High score entry for global, blizzard, and daily challenge leaderboards.",
+      "type": "object",
+      "properties": {
+        "entryId": {
+          "type": "string",
+          "description": "Unique entry document ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Player UID who achieved the score",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player display name",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "score": {
+          "type": "integer",
+          "description": "Final run score"
+        },
+        "maxCombo": {
+          "type": "integer",
+          "description": "Highest combo multiplier achieved during run"
+        },
+        "snowCleared": {
+          "type": "integer",
+          "description": "Snow tiles cleared in the run"
+        },
+        "mode": {
+          "type": "string",
+          "description": "Game mode for this score",
+          "enum": ["standard", "daily", "blizzard", "multiplayer"]
+        },
+        "dailySeed": {
+          "type": "string",
+          "description": "Date seed string for daily challenge or map seed",
+          "maxLength": 20
+        },
+        "skinId": {
+          "type": "string",
+          "description": "Truck skin used in the run",
+          "enum": ["classic_orange", "arctic_rescue", "midnight_frost", "golden_mammoth", "pine_ranger"]
+        },
+        "visibility": {
+          "type": "string",
+          "description": "Explicit visibility marker for secure list query enforcement",
+          "enum": ["public"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when entry was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when entry was updated"
+        }
+      },
+      "required": [
+        "entryId",
+        "uid",
+        "displayName",
+        "score",
+        "maxCombo",
+        "snowCleared",
+        "mode",
+        "dailySeed",
+        "skinId",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MultiplayerMatch": {
+      "title": "MultiplayerMatch",
+      "description": "Cross-platform real-time multiplayer competitive snow-plowing match state.",
+      "type": "object",
+      "properties": {
+        "matchId": {
+          "type": "string",
+          "description": "Match room ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostUid": {
+          "type": "string",
+          "description": "UID of the host player",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostName": {
+          "type": "string",
+          "description": "Display name of the host",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "hostSkin": {
+          "type": "string",
+          "description": "Truck skin of the host",
+          "enum": ["classic_orange", "arctic_rescue", "midnight_frost", "golden_mammoth", "pine_ranger"]
+        },
+        "hostScore": {
+          "type": "integer",
+          "description": "Current score of the host"
+        },
+        "hostProgress": {
+          "type": "integer",
+          "description": "Percentage (0-100) of snow cleared by host"
+        },
+        "hostX": {
+          "type": "number",
+          "description": "Host truck world X coordinate"
+        },
+        "hostZ": {
+          "type": "number",
+          "description": "Host truck world Z coordinate"
+        },
+        "hostAngle": {
+          "type": "number",
+          "description": "Host truck heading angle in radians"
+        },
+        "guestUid": {
+          "type": "string",
+          "description": "UID of the guest player (or empty string when waiting)",
+          "maxLength": 128
+        },
+        "guestName": {
+          "type": "string",
+          "description": "Display name of the guest player",
+          "maxLength": 50
+        },
+        "guestSkin": {
+          "type": "string",
+          "description": "Truck skin of the guest",
+          "enum": ["classic_orange", "arctic_rescue", "midnight_frost", "golden_mammoth", "pine_ranger"]
+        },
+        "guestScore": {
+          "type": "integer",
+          "description": "Current score of the guest"
+        },
+        "guestProgress": {
+          "type": "integer",
+          "description": "Percentage (0-100) of snow cleared by guest"
+        },
+        "guestX": {
+          "type": "number",
+          "description": "Guest truck world X coordinate"
+        },
+        "guestZ": {
+          "type": "number",
+          "description": "Guest truck world Z coordinate"
+        },
+        "guestAngle": {
+          "type": "number",
+          "description": "Guest truck heading angle in radians"
+        },
+        "mapSeed": {
+          "type": "string",
+          "description": "Shared procedural map generation seed",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "weather": {
+          "type": "string",
+          "description": "Weather condition for the match",
+          "enum": ["clear", "flurry", "blizzard", "ice_storm"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Match lifecycle status",
+          "enum": ["waiting", "active", "finished"]
+        },
+        "winnerUid": {
+          "type": "string",
+          "description": "UID of the winning player once finished",
+          "maxLength": 128
+        },
+        "visibility": {
+          "type": "string",
+          "description": "Visibility marker for matchmaking queries",
+          "enum": ["public"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of room creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last telemetry update"
+        }
+      },
+      "required": [
+        "matchId",
+        "hostUid",
+        "hostName",
+        "hostSkin",
+        "hostScore",
+        "hostProgress",
+        "hostX",
+        "hostZ",
+        "hostAngle",
+        "guestUid",
+        "guestName",
+        "guestSkin",
+        "guestScore",
+        "guestProgress",
+        "guestX",
+        "guestZ",
+        "guestAngle",
+        "mapSeed",
+        "weather",
+        "status",
+        "winnerUid",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private cloud-synced player progression and truck upgrades."
+    },
+    "/leaderboard/{entryId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Public high score leaderboard entries across game modes."
+    },
+    "/matches/{matchId}": {
+      "schema": {
+        "$ref": "#/entities/MultiplayerMatch"
+      },
+      "description": "Real-time cross-platform multiplayer snow-plowing match rooms."
+    }
+  }
+}
